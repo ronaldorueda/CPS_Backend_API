@@ -1,6 +1,6 @@
 ﻿namespace CPS_Backend_API.Models
 {
-    //new JSON structure that will be returned at my endpoint.
+    //Modified JSON structure to be returned by custom endpoint
     public class CalendarModel
     {
         public int CalendarID { get; set; }

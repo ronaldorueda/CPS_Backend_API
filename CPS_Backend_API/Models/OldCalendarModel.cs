@@ -1,6 +1,6 @@
 ﻿namespace CPS_Backend_API.Models
 {
-    //old model used to deserialize CPS' API
+    //Original JSON structure to be parsed by custom endpoint
     public class OldCalendarModel
     {
         public int CalendarID { get; set; }

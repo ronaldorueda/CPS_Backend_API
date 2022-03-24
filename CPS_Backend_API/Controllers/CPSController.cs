@@ -12,6 +12,7 @@ using CPS_Backend_API.Models;
 
 namespace CPS_Backend_API.Controllers
 {
+    //API route will be hit by using the following http://localhost:[port of run]/CPS  --  CPS is the name of the Controller.
     [ApiController]
     [Route("[controller]")]
     public class CPSController : Controller
@@ -25,11 +26,11 @@ namespace CPS_Backend_API.Controllers
             List<CalendarModel> calendars = new List<CalendarModel>();
             List<OldCalendarModel> parsedCalendars = new List<OldCalendarModel>();
 
-            //save response as a string to then use Newtonsoft's JSON nuget library to parse JSON into a oldCalendarModel list
+            //save response as a string to then use Newtonsoft's JSON nuget library to parse JSON into a `oldCalendarModel` list
             string responseBody = await response.Content.ReadAsStringAsync();
             parsedCalendars = JsonConvert.DeserializeObject<List<OldCalendarModel>>(responseBody);
 
-            //loop through oldCalendarModel list, get its fields to put into temp CalendarModel and put into newModel list.
+            //Grab values from `oldCalendarModel` to assign to `CalendarModel` so it uses new `html_Hex_ColorCode`
             for (int i = 0; i < parsedCalendars.Count; i++)
             {
                 CalendarModel tempParsedCalendar = new CalendarModel();
@@ -48,7 +49,8 @@ namespace CPS_Backend_API.Controllers
             return calendars;
         }
 
-        //API endpoint - calls GetCalendars to return new list of calendars and returns it as an array so it is in JSON structure.
+        //When CPSController is called through the API, it uses this method to perform HTTPGet
+        //TODO: at the moment this only returns CalendarModel JSON, but need to implement so that custom status codes with messages  are sent to use if CPS API is unreachable
         [HttpGet]
         public async Task<IEnumerable<CalendarModel>> GetAsync()
         {
@@ -60,18 +62,17 @@ namespace CPS_Backend_API.Controllers
             client.DefaultRequestHeaders.Accept.Add(
                 new MediaTypeWithQualityHeaderValue("application/json"));
 
-            //perform request and save it into a response
+            //Perform, save, evaluate, and return relavent Calendar information
             HttpResponseMessage response = client.GetAsync("").Result;
-
-            //check if response is valid - if so, parse it out into oldCalendarModel then loop through it to save into new model
             if (response.IsSuccessStatusCode)
             {
+                //If valid response, saved/return modified version in new model
                 calendars = await GetCalendars(response);
                 return calendars.ToArray();
             }
-            //print error code if CPS api is unreachable
             else
             {
+                //If CPS api is unreachable, print error code
                 Console.WriteLine("{0} ({1})", (int)response.StatusCode, response.ReasonPhrase);
                 return calendars;
             }
