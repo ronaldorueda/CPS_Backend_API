@@ -6,7 +6,7 @@ To run this API, you will need to go into the following folder path and run the 
 This will have the API running, and the end point to hit is http://localhost:5000/CPS. If running the application via VisualStudio 2019/2022, the end point to hit will be https://localhost:44354/CPS.
 
 Installation requirements:
-.Net Core 3.1 installed
+.Net Core 3.1
 IIS
 
 What to expect within the project:
