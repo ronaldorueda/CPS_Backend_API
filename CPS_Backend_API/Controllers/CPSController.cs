@@ -19,11 +19,40 @@ namespace CPS_Backend_API.Controllers
         private const string URL = "https://api.cps.edu/Calendar/cps/calendarslist"; //takes 50-100ms to get response
 
         //Method to call CPS API, parse it and return a list of new model
-        //currently taking 210ms-270ms - room for improvement to make it more efficient
-        public async Task<List<CalendarModel>> GetCalendars()
+        //currently taking 180ms-250ms - still room for improvement to make it more efficient
+        public async Task<List<CalendarModel>> GetCalendars(HttpResponseMessage response)
         {
             List<CalendarModel> calendars = new List<CalendarModel>();
             List<OldCalendarModel> parsedCalendars = new List<OldCalendarModel>();
+
+            //save response as a string to then use Newtonsoft's JSON nuget library to parse JSON into a oldCalendarModel list
+            string responseBody = await response.Content.ReadAsStringAsync();
+            parsedCalendars = JsonConvert.DeserializeObject<List<OldCalendarModel>>(responseBody);
+
+            //loop through oldCalendarModel list, get its fields to put into temp CalendarModel and put into newModel list.
+            for (int i = 0; i < parsedCalendars.Count; i++)
+            {
+                CalendarModel tempParsedCalendar = new CalendarModel();
+
+                tempParsedCalendar.CalendarID = parsedCalendars[i].CalendarID;
+                tempParsedCalendar.CalendarName = parsedCalendars[i].CalendarName;
+                tempParsedCalendar.html_Hex_ColorCode = parsedCalendars[i].ColorCode;
+                tempParsedCalendar.TagID = parsedCalendars[i].TagID;
+                tempParsedCalendar.ParentID = parsedCalendars[i].ParentID;
+                tempParsedCalendar.Status = parsedCalendars[i].Status;
+                tempParsedCalendar.Type = parsedCalendars[i].Type;
+
+                calendars.Add(tempParsedCalendar);
+            }
+
+            return calendars;
+        }
+
+        //API endpoint - calls GetCalendars to return new list of calendars and returns it as an array so it is in JSON structure.
+        [HttpGet]
+        public async Task<IEnumerable<CalendarModel>> GetAsync()
+        {
+            List<CalendarModel> calendars = new List<CalendarModel>();
 
             //setting up to perform request to api
             HttpClient client = new HttpClient();
@@ -35,44 +64,18 @@ namespace CPS_Backend_API.Controllers
             HttpResponseMessage response = client.GetAsync("").Result;
 
             //check if response is valid - if so, parse it out into oldCalendarModel then loop through it to save into new model
-            if(response.IsSuccessStatusCode)
+            if (response.IsSuccessStatusCode)
             {
-                //save response as a string to then use Newtonsoft's JSON nuget library to parse JSON into a oldCalendarModel list
-                string responseBody = await response.Content.ReadAsStringAsync();
-                parsedCalendars = JsonConvert.DeserializeObject<List<OldCalendarModel>>(responseBody);
-
-                //loop through oldCalendarModel list, get its fields to put into temp CalendarModel and put into newModel list.
-                for (int i = 0; i < parsedCalendars.Count; i++)
-                {
-                    CalendarModel tempParsedCalendar = new CalendarModel();
-
-                    tempParsedCalendar.CalendarID = parsedCalendars[i].CalendarID;
-                    tempParsedCalendar.CalendarName = parsedCalendars[i].CalendarName;
-                    tempParsedCalendar.html_Hex_ColorCode = parsedCalendars[i].ColorCode;
-                    tempParsedCalendar.TagID = parsedCalendars[i].TagID;
-                    tempParsedCalendar.ParentID = parsedCalendars[i].ParentID;
-                    tempParsedCalendar.Status = parsedCalendars[i].Status;
-                    tempParsedCalendar.Type = parsedCalendars[i].Type;
-
-                    calendars.Add(tempParsedCalendar);
-                }
+                calendars = await GetCalendars(response);
+                return calendars.ToArray();
             }
             //print error code if CPS api is unreachable
             else
             {
                 Console.WriteLine("{0} ({1})", (int)response.StatusCode, response.ReasonPhrase);
+                return calendars;
             }
-
-            return calendars;
         }
 
-        //API endpoint - calls GetCalendars to return new list of calendars and returns it as an array so it is in JSON structure.
-        [HttpGet]
-        public async Task<IEnumerable<CalendarModel>> GetAsync()
-        {
-            List<CalendarModel> calendars = await GetCalendars();
-
-            return calendars.ToArray();
-        }
     }
 }
